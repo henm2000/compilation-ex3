@@ -1,0 +1,294 @@
+/*************/
+/* IMPORT(S) */
+/*************/
+import java_cup.runtime.*;
+import ast.*;
+import java.util.*;
+
+parser code 
+{:
+    public Lexer lexer;
+
+    public Parser(Lexer lexer)
+    {
+        super(lexer);
+        this.lexer = lexer;
+    }
+    public void report_error(String message, Object info)
+    {
+
+        System.err.print("ERROR >> ");
+        System.err.print("[");
+        System.err.print(lexer.getLine());
+        System.err.print(":");
+        System.err.print(lexer.getTokenStartPosition());
+        System.err.print("] ");
+        System.err.println(message);
+        throw new SyntaxErrorException(lexer.getLine());
+    }
+:}
+
+/************************/
+/* CUSTOMIZE CUP PARSER */
+/************************/
+scan with
+{:
+    java_cup.runtime.Symbol token = lexer.next_token();
+    if (token.sym == TokenNames.ERROR) {
+        throw new Error("Lexical error");
+    }
+    return token;
+:};
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal IF;
+terminal EQ;
+terminal DOT;
+terminal PLUS;
+terminal MINUS;
+terminal TIMES;
+terminal WHILE;
+terminal DIVIDE;
+terminal LPAREN;
+terminal RPAREN;
+terminal LBRACK;
+terminal RBRACK;
+terminal LBRACE;
+terminal RBRACE;
+terminal SEMICOLON;
+terminal ASSIGN;
+terminal COMMA;
+terminal LT;
+terminal GT;
+
+terminal ARRAY;
+terminal CLASS;
+terminal RETURN;
+terminal ELSE;
+terminal NEW;
+terminal EXTENDS;
+terminal TYPE_INT;
+terminal TYPE_STRING;
+terminal TYPE_VOID;
+
+
+terminal ERROR;
+
+/*************/
+/* TERMINALS (with values) */
+/*************/
+terminal Integer INT;
+terminal String ID;
+terminal String STRING;
+terminal NIL;
+
+/*****************/
+/* NON TERMINALS */
+/*****************/
+non terminal AstProgram program;
+non terminal AstDec dec;
+non terminal java.util.List decList;
+non terminal String type;
+non terminal AstDec varDec;
+non terminal AstDec funcDec;
+non terminal AstDec classDec;
+non terminal AstDec arrayTypedef;
+non terminal java.util.List paramList;
+non terminal AstParam param;
+non terminal AstStmtList stmtList;
+non terminal AstStmt stmt;
+non terminal AstVar var;
+non terminal AstExp exp;
+non terminal AstExp newExp;
+non terminal AstExp callExp;
+non terminal java.util.List expList;
+non terminal java.util.List cFieldList;
+non terminal AstDec cField;
+
+/***********************/
+/* OPERATOR PRECEDENCE */
+/* 1 lowest .. 8 highest */
+/***********************/
+precedence left ASSIGN;    // :=
+precedence left EQ;        // =
+precedence left LT, GT;    // <, >
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left LBRACK;    // array indexing (postfix)
+precedence left LPAREN;    // function call (postfix)
+precedence left DOT;       // field access (highest)
+
+/**********************/
+/* START SYMBOL       */
+/**********************/
+start with program;
+
+/********************/
+/* DERIVATION RULES */
+/********************/
+
+/* program ::= dec { dec } */
+program ::=
+
+      
+      dec:d decList:dl           
+      {: 
+          java.util.ArrayList list = new java.util.ArrayList();
+          list.add(d);
+          list.addAll(dl);
+          RESULT = new AstProgram(list, dleft);
+      :}
+;
+
+/* decList ::= { dec }   -- zero or more declarations */
+decList ::=
+      /* empty */               {: RESULT = new java.util.ArrayList(); :}
+    | dec:d decList:dl          
+	{: 
+	java.util.ArrayList l = new java.util.ArrayList();
+	 l.add(d); 
+	 l.addAll(dl); 
+	 RESULT = l; 
+	:}
+;
+
+/* dec ::= varDec | funcDec | classDec | arrayTypedef */
+dec ::=
+      varDec:v            {: RESULT = v; :}
+    | funcDec:f           {: RESULT = f; :}
+    | classDec:c          {: RESULT = c; :}
+    | arrayTypedef:a      {: RESULT = a; :}
+;
+
+/* type ::= TYPE_INT | TYPE_STRING | TYPE_VOID | ID */
+type ::=
+      TYPE_INT            {: RESULT = "int"; :}
+    | TYPE_STRING         {: RESULT = "string"; :}
+    | TYPE_VOID           {: RESULT = "void"; :}
+    | ID:name             {: RESULT = name; :}
+;
+
+/* varDec (declaration) ::= type ID [ ASSIGN exp | ASSIGN newExp ] SEMICOLON */
+varDec ::=
+      type:t ID:name ASSIGN exp:e SEMICOLON    {: RESULT = new AstDecVar(t, name, e, nameleft); :}
+    | type:t ID:name ASSIGN newExp:ne SEMICOLON {: RESULT = new AstDecVar(t, name, ne, nameleft); :}
+    | type:t ID:name SEMICOLON                 {: RESULT = new AstDecVar(t, name, null, nameleft); :}
+;
+
+/* funcDec ::= type ID LPAREN [ param { COMMA param } ] RPAREN LBRACE stmtList RBRACE */
+funcDec ::=
+      type:ret ID:name LPAREN paramList:pl RPAREN LBRACE stmtList:body RBRACE
+            {: RESULT = new AstDecFunc(ret, name, pl, body, nameleft); :}
+    | type:ret ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
+            {: RESULT = new AstDecFunc(ret, name, new java.util.ArrayList(), body,nameleft); :}
+;
+
+/* paramList ::= param { COMMA param } */
+paramList ::=
+      param:p COMMA paramList:pl    {: java.util.ArrayList l = new java.util.ArrayList(); l.add(p); l.addAll(pl); RESULT = l; :}
+    | param:p                      {: java.util.ArrayList l = new java.util.ArrayList(); l.add(p); RESULT = l; :}
+;
+
+/* param ::= type ID */       // this is not a main rule but we will want it to return ast node for the future
+param ::=
+      type:t ID:name    {: RESULT = new AstParam(t, name, nameleft); :}
+;
+
+/* classDec ::= CLASS ID [ EXTENDS ID ] LBRACE cField { cField } RBRACE */
+classDec ::=
+      CLASS ID:name LBRACE cFieldList:cf RBRACE                      {: RESULT = new AstDecClass(name, null, cf, nameleft); :}
+    | CLASS ID:name EXTENDS ID:base LBRACE cFieldList:cf RBRACE     {: RESULT = new AstDecClass(name, base, cf, nameleft); :}
+;
+
+/* cField ::= varDec | funcDec */
+cField ::=
+      varDec:v         {: RESULT = v; :}
+    | funcDec:f        {: RESULT = f; :}
+;
+
+/* cFieldList ::= cField { cField }   -- one or more cField (matches PDF) */
+cFieldList ::=
+      cField:hd cFieldList:tl    {: java.util.ArrayList l = new java.util.ArrayList(); l.add(hd); l.addAll(tl); RESULT = l; :}
+    | cField:single              {: java.util.ArrayList l = new java.util.ArrayList(); l.add(single); RESULT = l; :}
+;
+
+/* arrayTypedef ::= ARRAY ID EQ type LBRACK RBRACK SEMICOLON */
+arrayTypedef ::=
+      ARRAY ID:name EQ type:t LBRACK RBRACK SEMICOLON   {: RESULT = new AstDecArrayTypedef(name, t, nameleft); :}
+;
+
+/* stmtList ::= stmt { stmt } */
+stmtList ::=
+      stmt:s stmtList:sl    {: RESULT = new AstStmtList(s, sl, sleft); :}
+    | stmt:s              {: RESULT = new AstStmtList(s, null, sleft); :}
+;
+
+/* stmt ::= varDec | var ASSIGN exp SEMICOLON | var ASSIGN newExp SEMICOLON
+           | RETURN [ exp ] SEMICOLON | IF ... | WHILE ... | callExp SEMICOLON */
+stmt ::=
+      varDec:v                          {: RESULT = new AstStmtVarDec(v, vleft); :}
+    | var:v ASSIGN exp:e SEMICOLON      {: RESULT = new AstStmtAssign(v, e, vleft); :}
+    | var:v ASSIGN newExp:ne SEMICOLON  {: RESULT = new AstStmtAssign(v, ne, vleft); :}
+    | RETURN:ret exp:e SEMICOLON            {: RESULT = new AstStmtReturn(e, retleft); :}
+    | RETURN:ret SEMICOLON                  {: RESULT = new AstStmtReturn(null, retleft); :}
+    | IF:ifToken LPAREN exp:cond RPAREN LBRACE stmtList:thenBlock RBRACE
+            {: RESULT = new AstStmtIf(cond, thenBlock, null, ifTokenleft); :}
+    | IF:ifToken LPAREN exp:cond RPAREN LBRACE stmtList:thenBlock RBRACE ELSE LBRACE stmtList:elseBlock RBRACE
+            {: RESULT = new AstStmtIf(cond, thenBlock, elseBlock, ifTokenleft); :}
+    | WHILE:whileToken LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE
+            {: RESULT = new AstStmtWhile(cond, body, whileTokenleft); :}
+    | callExp:ce SEMICOLON                {: RESULT = new AstStmtCall(ce, celeft); :}
+;
+
+
+
+
+
+
+/* newExp ::= NEW type | NEW type LBRACK exp RBRACK */
+newExp ::=
+      NEW:newToken type:t                          {: RESULT = new AstExpNew(t, newTokenleft); :}
+    | NEW:newToken type:t LBRACK exp:size RBRACK  {: RESULT = new AstExpNew(t, size, newTokenleft); :}
+;
+
+/* callExp ::= var DOT ID LPAREN [ exp { COMMA exp } ] RPAREN
+            | ID LPAREN [ exp { COMMA exp } ] RPAREN */
+callExp ::=
+      var:v DOT ID:name LPAREN expList:args RPAREN    {: RESULT = new AstExpCall(v, name, args, nameleft); :}
+    | var:v DOT ID:name LPAREN RPAREN                {: RESULT = new AstExpCall(v, name, new java.util.ArrayList(), nameleft); :}
+    | ID:name LPAREN expList:args RPAREN             {: RESULT = new AstExpCall(null, name, args, nameleft); :}
+    | ID:name LPAREN RPAREN                          {: RESULT = new AstExpCall(null, name, new java.util.ArrayList(), nameleft); :}
+;
+
+/* expList ::= exp { COMMA exp } */
+expList ::=
+      exp:e COMMA expList:el    {: java.util.ArrayList l = new java.util.ArrayList(); l.add(e); l.addAll(el); RESULT = l; :}
+    | exp:e                    {: java.util.ArrayList l = new java.util.ArrayList(); l.add(e); RESULT = l; :}
+;
+
+/* var ::= ID | var DOT ID | var LBRACK exp RBRACK */
+var ::=
+      ID:name                                {: RESULT = new AstVarSimple(name, nameleft); :}
+    | var:v DOT ID:name                      {: RESULT = new AstVarField(v, name, nameleft); :}
+    | var:v LBRACK exp:e RBRACK              {: RESULT = new AstVarSubscript(v, e, vleft); :}
+;
+
+/* exp: variants (variables, parentheses, binary ops, callExp, literals, unary minus on INT, string, nil) */
+exp ::=
+      var:v                                 {: RESULT = new AstExpVar(v, vleft); :}
+    | LPAREN exp:e RPAREN                   {: RESULT = e; :}
+    | exp:left PLUS exp:right               {: RESULT = new AstExpBinop(left, right, 0, leftleft); :}
+    | exp:left MINUS exp:right              {: RESULT = new AstExpBinop(left, right, 1, leftleft); :}
+    | exp:left TIMES exp:right              {: RESULT = new AstExpBinop(left, right, 2, leftleft); :}
+    | exp:left DIVIDE exp:right             {: RESULT = new AstExpBinop(left, right, 3, leftleft); :}
+    | exp:left LT exp:right                 {: RESULT = new AstExpBinop(left, right, 4, leftleft); :}
+    | exp:left GT exp:right                 {: RESULT = new AstExpBinop(left, right, 5, leftleft); :}
+    | exp:left EQ exp:right                 {: RESULT = new AstExpBinop(left, right, 6, leftleft); :}
+    | MINUS INT:i                           {: RESULT = new AstExpInt(-i, ileft); :}
+    | INT:i                                 {: RESULT = new AstExpInt(i, ileft); :}
+    | STRING:s                              {: RESULT = new AstExpString(s, sleft); :}
+    | NIL:nilToken                                  {: RESULT = new AstExpNil(nilTokenleft); :}
+    | callExp:ce                            {: RESULT = ce; :}
+;
