@@ -56,4 +56,46 @@ public class AstVarField extends AstVar
 		/****************************************/
 		if (var != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
 	}
+	public Type semantMe()
+	{
+		Type t = null;
+		TypeClass tc = null;
+		
+		/******************************/
+		/* [1] Recursively semant var */
+		/******************************/
+		if (var != null) t = var.semantMe();
+		
+		/*********************************/
+		/* [2] Make sure type is a class */
+		/*********************************/
+		if (t.isClass() == false)
+		{
+			System.out.format(">> ERROR [%d:%d] access %s field of a non-class variable\n",6,6,fieldName);
+			System.exit(0);
+		}
+		else
+		{
+			tc = (TypeClass) t;
+		}
+		
+		/************************************/
+		/* [3] Look for fiedlName inside tc */
+		/************************************/
+		for (TypeList it = tc.dataMembers; it != null; it=it.tail)
+		{
+			if (it.head.name == fieldName)
+			{
+				return it.head;
+			}
+		}
+		
+		/*********************************************/
+		/* [4] fieldName does not exist in class var */
+		/*********************************************/
+		System.out.format(">> ERROR [%d:%d] field %s does not exist in class\n",6,6,fieldName);							
+		System.exit(0);
+		return null;
+	}
+
 }

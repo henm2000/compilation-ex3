@@ -84,4 +84,19 @@ public class AstExpBinop extends AstExp
         if (right != null)
             AstGraphviz.getInstance().logEdge(serialNumber, right.serialNumber);
     }
+    public Type semantMe()
+    {
+        Type t1 = null;
+        Type t2 = null;
+        
+        if (left  != null) t1 = left.semantMe();
+        if (right != null) t2 = right.semantMe();
+        
+        if ((t1 == TypeInt.getInstance()) && (t2 == TypeInt.getInstance()))
+        {
+            return TypeInt.getInstance();
+        }
+        System.exit(0);
+        return null;
+    }
 }

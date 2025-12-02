@@ -17,4 +17,8 @@ public class AstExpString extends AstExp
         System.out.print("AST NODE STRING EXP ( " + value + " )\n");
         AstGraphviz.getInstance().logNode(serialNumber, "STRING\\n(" + value + ")");
     }
+    public Type semantMe()
+    {
+        return TypeString.getInstance();
+    }
 }

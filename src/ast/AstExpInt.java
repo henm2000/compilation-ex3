@@ -43,4 +43,8 @@ public class AstExpInt extends AstExp
 				serialNumber,
 			String.format("INT(%d)",value));
 	}
+	public Type semantMe()
+	{
+		return TypeInt.getInstance();
+	}
 }

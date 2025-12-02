@@ -46,4 +46,8 @@ public class AstVarSimple extends AstVar
 				serialNumber,
 			String.format("SIMPLE\nVAR\n(%s)",name));
 	}
+	public Type semantMe()
+	{
+		return SymbolTable.getInstance().find(name);
+	}
 }
