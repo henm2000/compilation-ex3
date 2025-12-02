@@ -1,4 +1,3 @@
-   
 import java.io.*;
 import java.io.PrintWriter;
 import java_cup.runtime.Symbol;
@@ -6,14 +5,15 @@ import ast.*;
 
 public class Main
 {
+	/*this code works on the pc*/ 
 	static public void main(String argv[])
 	{
 		Lexer l;
 		Parser p;
 		Symbol s;
-		AstDecList ast;
-		FileReader fileReader;
-		PrintWriter fileWriter;
+		AstProgram  ast;
+		FileReader fileReader=null;
+		PrintWriter fileWriter=null;
 		String inputFileName = argv[0];
 		String outputFileName = argv[1];
 		
@@ -42,34 +42,83 @@ public class Main
 			/***********************************/
 			/* [5] 3 ... 2 ... 1 ... Parse !!! */
 			/***********************************/
-			ast = (AstDecList) p.parse().value;
+			ast = (AstProgram) p.parse().value;
 			
 			/*************************/
 			/* [6] Print the AST ... */
 			/*************************/
-			ast.printMe();
+			if (ast != null) 
+			{
+                ast.printMe();
+				ast.semantMe();
+                AstGraphviz.getInstance().finalizeFile();
+            }
 
-			/**************************/
-			/* [7] Semant the AST ... */
-			/**************************/
-			ast.semantMe();
+
+			fileWriter.print("OK");
+            fileWriter.flush();
+
 			
 			/*************************/
-			/* [8] Close output file */
+			/* [7] Close output file */
 			/*************************/
 			fileWriter.close();
-
+			
 			/*************************************/
-			/* [9] Finalize AST GRAPHIZ DOT file */
+			/* [8] Finalize AST GRAPHIZ DOT file */
 			/*************************************/
 			AstGraphviz.getInstance().finalizeFile();
     	}
 			     
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
+		catch (SyntaxErrorException e)
+        {
+            // Syntax error: must print ERROR(line)
+            try {
+                if (fileWriter == null) {
+                    fileWriter = new PrintWriter(outputFileName);
+                }
+                fileWriter.print("ERROR(" + e.getLine() + ")");
+                fileWriter.flush();
+            } catch (Exception ignored) {}
+        }
+        catch (Error e)
+        {
+            // Lexical error: must print ERROR (no brackets)
+            try 
+			{
+                if (fileWriter == null) {
+                    fileWriter = new PrintWriter(outputFileName);
+                }
+                fileWriter.print("ERROR");
+                fileWriter.flush();
+            } 
+			catch (Exception ignored) 
+			{}
+        }
+        catch (Exception e)
+        {
+            // Anything else -> plain ERROR
+            try 
+			{
+                if (fileWriter == null) {
+                    fileWriter = new PrintWriter(outputFileName);
+                }
+                fileWriter.print("ERROR");
+                fileWriter.flush();
+            } 
+			catch (Exception ignored) 
+			{}
+			System.err.println("==== General exception caught in Main ====");
+    		e.printStackTrace(System.err);
+
+
+        }
+        finally
+        {
+            try {
+                if (fileReader != null) fileReader.close();
+            } catch (IOException ignored) {}
+            if (fileWriter != null) fileWriter.close();
+        }
+    }
 }
-
-
