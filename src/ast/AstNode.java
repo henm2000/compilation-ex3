@@ -1,5 +1,5 @@
 package ast;
-
+//finished
 public abstract class AstNode
 {
 	/*******************************************/
@@ -14,5 +14,8 @@ public abstract class AstNode
 	public void printMe()
 	{
 		System.out.print("AST NODE UNKNOWN\n");
+	}
+	public Type semantMe(){
+		return null;
 	}
 }

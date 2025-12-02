@@ -15,7 +15,7 @@ public class TypeString extends Type
 	/******************************/
 	/* GET SINGLETON INSTANCE ... */
 	/******************************/
-	public static TypeString getInstance()
+	public static Type getInstance()
 	{
 		if (instance == null)
 		{

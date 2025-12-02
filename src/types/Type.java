@@ -16,4 +16,5 @@ public abstract class Type
 	/* isArray() */
 	/*************/
 	public boolean isArray(){ return false;}
+	public static Type getInstance(){return null};
 }

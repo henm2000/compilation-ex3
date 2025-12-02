@@ -1,4 +1,5 @@
 package ast;
+//TODO: we should implement the boolean = sign according to class logic. 
 
 public class AstExpBinop extends AstExp
 {
@@ -86,17 +87,38 @@ public class AstExpBinop extends AstExp
     }
     public Type semantMe()
     {
+    /* Mapping used in CUP actions:
+         * 0 -> PLUS
+         * 1 -> MINUS
+         * 2 -> TIMES
+         * 3 -> DIVIDE
+         * 4 -> LT
+         * 5 -> GT
+         * 6 -> EQ
+         */
         Type t1 = null;
         Type t2 = null;
         
         if (left  != null) t1 = left.semantMe();
         if (right != null) t2 = right.semantMe();
-        
-        if ((t1 == TypeInt.getInstance()) && (t2 == TypeInt.getInstance()))
-        {
-            return TypeInt.getInstance();
+        /*
+        TODO: we should implement the boolean = sign according to class logic. 
+        */
+        if (this.op == 0 && t1.getInstance() == t2.getInstance()){
+            //case = (boolean opeartor, compares two comparable variables \ classes)
+            return t1.getInstance();
         }
+        if (this.op == 1 && t1.getInstance() == t2.getInstance() && t1.getInstance().name == "string"){
+            // case str concatenation 
+            return t1.getInstance();
+        }
+        if (t1.getInstance == t2.getInstance && t1.getInstance().name == "int"){
+            // case int operators.
+            return t1.getInstance();
+        }
+        throw SemanticError(this.line);
         System.exit(0);
         return null;
     }
+
 }

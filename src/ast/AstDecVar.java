@@ -1,5 +1,5 @@
 package ast;
-
+// finished
 public class AstDecVar extends AstDec
 {
     public String typeName;
@@ -33,25 +33,32 @@ public class AstDecVar extends AstDec
         /****************************/
         /* [1] Check If Type exists */
         /****************************/
-        t = SymbolTable.getInstance().find(type);
+        t = SymbolTable.getInstance().find(typeName);
         if (t == null)
         {
-            System.out.format(">> ERROR [%d:%d] non existing type %s\n",2,2,type);
+            System.out.format(">> ERROR [%d:%d] non existing type %s\n",line,2,typeName);
             System.exit(0);
         }
         
         /**************************************/
         /* [2] Check That Name does NOT exist */
         /**************************************/
-        if (SymbolTable.getInstance().find(name) != null)
+        if (t == TypeVoid.getInstance())
         {
-            System.out.format(">> ERROR [%d:%d] variable %s already exists in scope\n",2,2,name);				
+        System.out.format(">> ERROR [%d:%d] variable %s cannot have void type\n", line, 2, id);
+        System.exit(0);
+        }
+        /**************************************/
+        /* [3] Check That Name does NOT exist within the scope */
+        /**************************************/
+        if (SymbolTable.getInstance.findInCurrentScope(id) != null){
+            System.out.format(">> ERROR [%d:%d] variable %s already exists in scope\n",line,2,id);
         }
   
         /************************************************/
         /* [3] Enter the Identifier to the Symbol Table */
         /************************************************/
-        SymbolTable.getInstance().enter(name,t);
+        SymbolTable.getInstance().enter(id,t);
   
         /************************************************************/
         /* [4] Return value is irrelevant for variable declarations */

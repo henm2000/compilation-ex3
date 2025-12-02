@@ -149,6 +149,26 @@ public class SymbolTable
 	
 	public static int n=0;
 	
+	public Type findInCurrentScope(String name){
+		SymbolTableEntry e;
+		SymbolTableEntry scopeBoundary = null;
+
+		for (e = top ; e!= null; e = prevtop){ // goes backward up to {
+			if (e.name.equals("SCOPE-BOUNDARY")){
+				scopeBoundary = e;
+				break;
+			}
+		}
+		
+		for (e = top; e != null && e != scopeBoundary; e = e.prevtop)
+    	{
+        if (name.equals(e.name))
+        {
+            return e.type;
+        }
+		return null;
+	}
+
 	public void printMe()
 	{
 		int i=0;

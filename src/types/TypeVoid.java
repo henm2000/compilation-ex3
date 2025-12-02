@@ -15,7 +15,7 @@ public class TypeVoid extends Type
 	/******************************/
 	/* GET SINGLETON INSTANCE ... */
 	/******************************/
-	public static TypeVoid getInstance()
+	public static Type getInstance()
 	{
 		if (instance == null)
 		{

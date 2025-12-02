@@ -15,7 +15,7 @@ public class TypeInt extends Type
 	/******************************/
 	/* GET SINGLETON INSTANCE ... */
 	/******************************/
-	public static TypeInt getInstance()
+	public static Type getInstance()
 	{
 		if (instance == null)
 		{

@@ -1,7 +1,7 @@
 package ast;
 
 public class AstStmtIf extends AstStmt
-{
+{// TODO: check scopes
     public AstExp cond;
     public AstStmtList thenBody;
     public AstStmtList elseBody; // may be null
