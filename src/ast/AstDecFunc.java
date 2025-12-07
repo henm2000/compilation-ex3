@@ -1,6 +1,8 @@
 package ast;
 
 import java.util.List;
+import types.*;
+import symboltable.SymbolTable;
 
 public class AstDecFunc extends AstDec
 {
@@ -36,19 +38,21 @@ public class AstDecFunc extends AstDec
             AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
         }
     }
+    
     public Type semantMe()
     {
         Type t;
-        Type returnType = null;
+        Type returnTypeObj = null;
         TypeList type_list = null;
 
         /*******************/
-        /* [0] return type */
+        /* [0] Check return type exists */
+        /*     Must be a type definition, not a variable */
         /*******************/
-        returnType = SymbolTable.getInstance().find(returnTypeName);
-        if (returnType == null)
+        returnTypeObj = SymbolTable.getInstance().findTypeDefinition(this.returnType);
+        if (returnTypeObj == null)
         {
-            System.out.format(">> ERROR [%d:%d] non existing return type %s\n",6,6,returnType);				
+            throw new SemanticErrorException(line);
         }
     
         /****************************/
@@ -59,24 +63,34 @@ public class AstDecFunc extends AstDec
         /***************************/
         /* [2] Semant Input Params */
         /***************************/
-        for (AstTypeNameList it = params; it  != null; it = it.tail)
-        {
-            t = SymbolTable.getInstance().find(it.head.type);
-            if (t == null)
+        if (params != null) {
+            for (AstParam param : params)
             {
-                System.out.format(">> ERROR [%d:%d] non existing type %s\n",2,2,it.head.type);				
-            }
-            else
-            {
-                type_list = new TypeList(t,type_list);
-                SymbolTable.getInstance().enter(it.head.name,t);
+                t = SymbolTable.getInstance().findTypeDefinition(param.typeName);
+                if (t == null)
+                {
+                    throw new SemanticErrorException(line);
+                }
+                
+                /************************************************/
+                /* [2a] Check that parameter type is not void    */
+                /************************************************/
+                if (t == TypeVoid.getInstance() || param.typeName.equals("void"))
+                {
+                    throw new SemanticErrorException(line);
+                }
+                
+                type_list = new TypeList(t, type_list);
+                SymbolTable.getInstance().enter(param.id, t);
             }
         }
 
         /*******************/
         /* [3] Semant Body */
         /*******************/
-        body.semantMe();
+        if (body != null) {
+            body.semantMe();
+        }
 
         /*****************/
         /* [4] End Scope */
@@ -86,7 +100,7 @@ public class AstDecFunc extends AstDec
         /***************************************************/
         /* [5] Enter the Function Type to the Symbol Table */
         /***************************************************/
-        SymbolTable.getInstance().enter(name,new TypeFunction(returnType,name,type_list));
+        SymbolTable.getInstance().enter(name, new TypeFunction(returnTypeObj, name, type_list));
 
         /************************************************************/
         /* [6] Return value is irrelevant for function declarations */

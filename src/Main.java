@@ -54,7 +54,9 @@ public class Main
                 AstGraphviz.getInstance().finalizeFile();
             }
 
-
+			/*************************/
+			/* [7] Print OK if no errors */
+			/*************************/
 			fileWriter.print("OK");
             fileWriter.flush();
 
@@ -81,37 +83,26 @@ public class Main
                 fileWriter.flush();
             } catch (Exception ignored) {}
         }
-        catch (Error e)
+        catch (LexicalErrorException e)
         {
-            // Lexical error: must print ERROR (no brackets)
-            try 
-			{
+            try {
                 if (fileWriter == null) {
                     fileWriter = new PrintWriter(outputFileName);
                 }
-                fileWriter.print("ERROR");
+                fileWriter.print("ERROR"); 
                 fileWriter.flush();
-            } 
-			catch (Exception ignored) 
-			{}
+            } catch (Exception ignored) {}
         }
-        catch (Exception e)
+
+        catch (SemanticErrorException e)
         {
-            // Anything else -> plain ERROR
-            try 
-			{
+            try {
                 if (fileWriter == null) {
                     fileWriter = new PrintWriter(outputFileName);
                 }
-                fileWriter.print("ERROR");
+                fileWriter.print("ERROR(" + e.getLine() + ")");
                 fileWriter.flush();
-            } 
-			catch (Exception ignored) 
-			{}
-			System.err.println("==== General exception caught in Main ====");
-    		e.printStackTrace(System.err);
-
-
+            } catch (Exception ignored) {}
         }
         finally
         {

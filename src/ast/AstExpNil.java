@@ -9,6 +9,9 @@ public class AstExpNil extends AstExp
         System.out.print("====================== exp -> NIL\n");
         this.line = line;
     }
+    public Type semantMe(){
+        return TypeNil.getInstance();
+    }
 
     public void printMe()
     {

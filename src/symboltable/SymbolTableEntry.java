@@ -38,6 +38,11 @@ public class SymbolTableEntry
 	/* The prevtopIndex is just for debug purposes ... */
 	/****************************************************/
 	public int prevtopIndex;
+
+	/***************/
+	/* Classification */
+	/***************/
+	public String classification;
 	
 	/******************/
 	/* CONSTRUCTOR(S) */
@@ -45,6 +50,7 @@ public class SymbolTableEntry
 	public SymbolTableEntry(
 		String name,
 		Type type,
+		String classification,
 		int index,
 		SymbolTableEntry next,
 		SymbolTableEntry prevtop,
@@ -54,6 +60,7 @@ public class SymbolTableEntry
 		this.name = name;
 		this.type = type;
 		this.next = next;
+		this.classification = classification;
 		this.prevtop = prevtop;
 		this.prevtopIndex = prevtopIndex;
 	}

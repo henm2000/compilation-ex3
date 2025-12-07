@@ -4,6 +4,8 @@
 import java_cup.runtime.*;
 import ast.*;
 import java.util.*;
+import SyntaxErrorException;
+import LexicalErrorException;
 
 parser code 
 {:
@@ -35,7 +37,7 @@ scan with
 {:
     java_cup.runtime.Symbol token = lexer.next_token();
     if (token.sym == TokenNames.ERROR) {
-        throw new Error("Lexical error");
+        throw new LexicalErrorException();
     }
     return token;
 :};

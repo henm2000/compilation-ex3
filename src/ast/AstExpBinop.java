@@ -116,8 +116,7 @@ public class AstExpBinop extends AstExp
             // case int operators.
             return t1.getInstance();
         }
-        throw SemanticError(this.line);
-        System.exit(0);
+        throw new SemanticErrorException(this.line);
         return null;
     }
 

@@ -48,7 +48,10 @@ public class AstVarSimple extends AstVar
 	}
 	public Type semantMe()
 	{
-		return SymbolTable.getInstance().find(name);
-		
+		Type result = SymbolTable.getInstance().find(name);
+		if (result == null) {
+			throw new SemanticErrorException(line);
+		}
+		return result;
 	}
 }

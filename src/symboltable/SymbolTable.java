@@ -7,11 +7,13 @@ package symboltable;
 /* GENERAL IMPORTS */
 /*******************/
 import java.io.PrintWriter;
+import java.util.HashMap;
 
 /*******************/
 /* PROJECT IMPORTS */
 /*******************/
 import types.*;
+import SemanticErrorException;
 
 /****************/
 /* SYMBOL TABLE */
@@ -97,6 +99,88 @@ public class SymbolTable
 		
 		return null;
 	}
+	
+	/***********************************************/
+	/* Find a type definition (not a variable)     */
+	/* This ensures we get a type, not a variable */
+	/* or function with the same name              */
+	/***********************************************/
+	public Type findTypeDefinition(String name)
+	{
+		SymbolTableEntry e;
+		
+		// First check if it's a primitive type
+		if (name.equals("int") || name.equals("string")) {
+			Type t = find(name);
+			if (t != null && (t == TypeInt.getInstance() || t == TypeString.getInstance())) {
+				return t;
+			}
+		}
+		
+		// Search for the entry
+		for (e = table[hash(name)]; e != null; e = e.next)
+		{
+			if (name.equals(e.name))
+			{
+				Type t = e.type;
+				
+				// Reject functions - they're not type definitions
+				if (t instanceof TypeFunction) {
+					return null;
+				}
+				
+				// For TypeClass, verify it's a type definition
+				// (entry name matches type name, not a variable of that type)
+				if (t instanceof TypeClass) {
+					TypeClass tc = (TypeClass) t;
+					if (name.equals(tc.name)) {
+						return t; // It's a type definition
+					}
+					return null; // It's a variable of that class type
+				}
+				
+				// For TypeArray, verify it's a type definition
+				if (t instanceof TypeArray) {
+					TypeArray ta = (TypeArray) t;
+					if (name.equals(ta.name)) {
+						return t; // It's a type definition
+					}
+					return null; // It's a variable of that array type
+				}
+				
+				// For primitives, if name matches, it's a type definition
+				if (t == TypeInt.getInstance() && name.equals("int")) {
+					return t;
+				}
+				if (t == TypeString.getInstance() && name.equals("string")) {
+					return t;
+				}
+				
+				// Otherwise, it's likely a variable with a primitive type
+				return null;
+			}
+		}
+		
+		return null;
+	}
+	
+	/***********************************************/
+	/* Check if we're currently in global scope   */
+	/* Returns true if no SCOPE-BOUNDARY found      */
+	/***********************************************/
+	public boolean isInGlobalScope()
+	{
+		// Traverse backwards from top to check for SCOPE-BOUNDARY
+		SymbolTableEntry e;
+		for (e = top; e != null; e = e.prevtop)
+		{
+			if (e.name != null && e.name.equals("SCOPE-BOUNDARY"))
+			{
+				return false; // Found a scope boundary, we're in a nested scope
+			}
+		}
+		return true; // No scope boundaries found, we're in global scope
+	}
 
 	/***************************************************************************/
 	/* begine scope = Enter the <SCOPE-BOUNDARY> element to the data structure */
@@ -153,19 +237,18 @@ public class SymbolTable
 		SymbolTableEntry e;
 		SymbolTableEntry scopeBoundary = null;
 
-		for (e = top ; e!= null; e = prevtop){ // goes backward up to {
+		for (e = top ; e!= null; e = e.prevtop){ // goes backward up to {
 			if (e.name.equals("SCOPE-BOUNDARY")){
 				scopeBoundary = e;
 				break;
 			}
 		}
 		
-		for (e = top; e != null && e != scopeBoundary; e = e.prevtop)
-    	{
-        if (name.equals(e.name))
-        {
-            return e.type;
-        }
+		for (e = top; e != null && e != scopeBoundary; e = e.prevtop){
+			if (name.equals(e.name)){
+				return e.type;
+			}
+		}
 		return null;
 	}
 

@@ -1,8 +1,10 @@
 package ast;
 
+import types.TypeClassField;
+
 public class AstVarField extends AstVar
 {
-	public AstVar var;
+	public AstVar var; 
 	public String fieldName;
 	public int line;
 	/******************/
@@ -71,8 +73,7 @@ public class AstVarField extends AstVar
 		/*********************************/
 		if (t.isClass() == false)
 		{
-			System.out.format(">> ERROR [%d:%d] access %s field of a non-class variable\n",6,6,fieldName);
-			System.exit(0);
+			throw new SemanticErrorException(line);
 		}
 		else
 		{
@@ -80,12 +81,16 @@ public class AstVarField extends AstVar
 		}
 		
 		/************************************/
-		/* [3] Look for fiedlName inside tc */
+		/* [3] Look for fieldName inside tc */
 		/************************************/
 		for (TypeList it = tc.dataMembers; it != null; it=it.tail)
 		{
-			if (it.head.name == fieldName)
+			if (it.head != null && it.head.name != null && it.head.name.equals(fieldName))
 			{
+				// If it's a TypeClassField, return the actual field type
+				if (it.head instanceof TypeClassField) {
+					return ((TypeClassField) it.head).getFieldType();
+				}
 				return it.head;
 			}
 		}
@@ -93,8 +98,7 @@ public class AstVarField extends AstVar
 		/*********************************************/
 		/* [4] fieldName does not exist in class var */
 		/*********************************************/
-		System.out.format(">> ERROR [%d:%d] field %s does not exist in class\n",6,6,fieldName);							
-		System.exit(0);
+		throw new SemanticErrorException(line);
 		return null;
 	}
 

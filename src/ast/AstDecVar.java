@@ -1,5 +1,8 @@
 package ast;
-// finished
+
+import types.*;
+import symboltable.SymbolTable;
+
 public class AstDecVar extends AstDec
 {
     public String typeName;
@@ -31,37 +34,46 @@ public class AstDecVar extends AstDec
         Type t;
     
         /****************************/
-        /* [1] Check If Type exists */
+        /* [1] Check If Type exists  */
+        /*     Must be a type definition, not a variable */
         /****************************/
-        t = SymbolTable.getInstance().find(typeName);
+        t = SymbolTable.getInstance().findTypeDefinition(typeName);
         if (t == null)
         {
-            System.out.format(">> ERROR [%d:%d] non existing type %s\n",line,2,typeName);
-            System.exit(0);
+            throw new SemanticErrorException(line);
         }
         
         /**************************************/
-        /* [2] Check That Name does NOT exist */
+        /* [2] Check That type is not void    */
         /**************************************/
-        if (t == TypeVoid.getInstance())
+        if (t == TypeVoid.getInstance() || typeName.equals("void"))
         {
-        System.out.format(">> ERROR [%d:%d] variable %s cannot have void type\n", line, 2, id);
-        System.exit(0);
+            throw new SemanticErrorException(line);
         }
+        
         /**************************************/
         /* [3] Check That Name does NOT exist within the scope */
         /**************************************/
-        if (SymbolTable.getInstance.findInCurrentScope(id) != null){
-            System.out.format(">> ERROR [%d:%d] variable %s already exists in scope\n",line,2,id);
+        if (SymbolTable.getInstance().findInCurrentScope(id) != null) {
+            throw new SemanticErrorException(line);
         }
   
         /************************************************/
-        /* [3] Enter the Identifier to the Symbol Table */
+        /* [4] Enter the Identifier to the Symbol Table */
         /************************************************/
-        SymbolTable.getInstance().enter(id,t);
+        SymbolTable.getInstance().enter(id, t);
+        
+        /************************************************/
+        /* [5] Check initialization expression type     */
+        /************************************************/
+        if (init != null) {
+            Type initType = init.semantMe();
+            // Note: Assignment compatibility will be checked later in AstStmtAssign
+            // For now, we just semant the expression to ensure it's valid
+        }
   
         /************************************************************/
-        /* [4] Return value is irrelevant for variable declarations */
+        /* [6] Return value is irrelevant for variable declarations */
         /************************************************************/
         return null;		
     }  

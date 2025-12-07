@@ -1,11 +1,14 @@
 package types;
 
+import java.util.HashMap;
+
 public class TypeClass extends Type
 {
 	/*********************************************************************/
 	/* If this class does not extend a father class this should be null  */
 	/*********************************************************************/
 	public TypeClass father;
+	public static HashMap<String, TypeClass> classes = new HashMap<>();
 
 	/**************************************************/
 	/* Gather up all data members in one place        */
@@ -21,6 +24,13 @@ public class TypeClass extends Type
 	{
 		this.name = name;
 		this.father = father;
-		this.dataMembers = dataMembers;
+		this.dataMembers = dataMembers; 
+		this.classes.put(name, this);
 	}
+	
+	/*************/
+	/* isClass() */
+	/*************/
+	@Override
+	public boolean isClass() { return true; }
 }

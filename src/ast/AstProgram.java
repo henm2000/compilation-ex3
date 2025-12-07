@@ -13,7 +13,12 @@ public class AstProgram extends AstNode
         this.decls = decls;
         this.line = line;
     }
-
+    public Type semantMe(){
+        for (AstDec d : decls) {
+            d.semantMe();
+        }
+        return null;
+    }
     public void printMe()
     {
         System.out.print("AST NODE PROGRAM\n");
