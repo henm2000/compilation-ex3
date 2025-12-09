@@ -1,5 +1,8 @@
 package ast;
 
+import types.*;
+import SemanticErrorException;
+
 public class AstStmtAssign extends AstStmt
 {
 	/***************/
@@ -62,16 +65,128 @@ public class AstStmtAssign extends AstStmt
 	}
 	public Type semantMe()
 	{
-		Type t1 = null;
-		Type t2 = null;
+		Type varType = null;
+		Type expType = null;
 		
-		if (var != null) t1 = var.semantMe();
-		if (exp != null) t2 = exp.semantMe();
+		/************************************************/
+		/* [1] Get types of variable and expression     */
+		/************************************************/
+		if (var != null) varType = var.semantMe();
+		if (exp != null) expType = exp.semantMe();
 		
-		if (t1 != t2)
-		{
-			System.out.format(">> ERROR [%d:%d] type mismatch for var := exp\n",6,6);				
+		/************************************************/
+		/* [2] Check assignment compatibility           */
+		/************************************************/
+		if (!isAssignmentCompatible(varType, expType, exp)) {
+			throw new SemanticErrorException(line);
 		}
+		
+		/************************************************/
+		/* [3] Return value is irrelevant for statements */
+		/************************************************/
 		return null;
+	}
+	
+	/**
+	 * Check if expression type is compatible with variable type for assignment
+	 */
+	private boolean isAssignmentCompatible(Type varType, Type expType, AstExp exp)
+	{
+		/************************************************/
+		/* Handle nil: can be assigned to arrays/classes */
+		/* but not to primitives (int/string)            */
+		/************************************************/
+		if (isNilType(expType)) {
+			return varType.isArray() || varType.isClass();
+		}
+		
+		/************************************************/
+		/* Primitives: exact type match required         */
+		/************************************************/
+		if (varType == TypeInt.getInstance() || varType == TypeString.getInstance()) {
+			return varType == expType;
+		}
+		
+		/************************************************/
+		/* Arrays: special handling for new T           */
+		/************************************************/
+		if (varType.isArray()) {
+			TypeArray varArray = (TypeArray) varType;
+			
+			// Check if expression is "new T" (not "new T[e]")
+			if (exp instanceof AstExpNew) {
+				AstExpNew newExp = (AstExpNew) exp;
+				// If sizeExpr is null, it's "new T" (class allocation)
+				// If sizeExpr is not null, it's "new T[e]" (array allocation)
+				
+				if (newExp.sizeExpr == null) {
+					// Expression is "new T" - this is for class allocation, not array
+					// So this case shouldn't match array assignment
+					return false;
+				} else {
+					// Expression is "new T[e]" - check if T matches array element type
+					// Note: We need to check if the typeName matches the element type
+					// For now, we'll rely on expType being set correctly by AstExpNew.semantMe()
+					// But we need to check if it's an array with matching element type
+					if (expType.isArray()) {
+						TypeArray expArray = (TypeArray) expType;
+						// Arrays must have exactly the same type (same name)
+						return varArray.name.equals(expArray.name);
+					}
+					return false;
+				}
+			}
+			
+			// For non-new expressions, arrays must have exactly the same type
+			if (expType.isArray()) {
+				TypeArray expArray = (TypeArray) expType;
+				return varArray.name.equals(expArray.name);
+			}
+			
+			return false;
+		}
+		
+		/************************************************/
+		/* Classes: same type OR expType is subclass    */
+		/* of varType (polymorphism)                     */
+		/************************************************/
+		if (varType.isClass()) {
+			if (!expType.isClass()) {
+				return false;
+			}
+			
+			TypeClass varClass = (TypeClass) varType;
+			TypeClass expClass = (TypeClass) expType;
+			
+			// Same class
+			if (varClass.name.equals(expClass.name)) {
+				return true;
+			}
+			
+			// Check if expClass is a subclass of varClass
+			TypeClass current = expClass.father;
+			while (current != null) {
+				if (current.name.equals(varClass.name)) {
+					return true;
+				}
+				current = current.father;
+			}
+			
+			return false;
+		}
+		
+		/************************************************/
+		/* If we get here, types are incompatible       */
+		/************************************************/
+		return false;
+	}
+	
+	/**
+	 * Check if a type is nil
+	 */
+	private boolean isNilType(Type t)
+	{
+		if (t == null) return false;
+		return t.name != null && t.name.equals("nil");
 	}
 }
