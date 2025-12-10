@@ -225,10 +225,139 @@ public class SymbolTable
 		topIndex = topIndex -1;
 		top = top.prevtop;
 
-		/*********************************************/
-		/* Print the symbol table after every change */		
-		/*********************************************/
-		printMe();
+	/*********************************************/
+	/* Print the symbol table after every change */		
+	/*********************************************/
+	printMe();
+	}
+	
+	/***********************************************/
+	/* Variable to track current function return type */
+	/* (No stack needed since functions can't nest) */
+	/***********************************************/
+	private Type currentReturnType = null;
+	
+	/***********************************************/
+	/* Set current function return type            */
+	/***********************************************/
+	public void setReturnType(Type returnType)
+	{
+		currentReturnType = returnType;
+	}
+	
+	/***********************************************/
+	/* Clear current function return type          */
+	/***********************************************/
+	public void clearReturnType()
+	{
+		currentReturnType = null;
+	}
+	
+	/***********************************************/
+	/* Get current function return type            */
+	/***********************************************/
+	public Type getCurrentReturnType()
+	{
+		return currentReturnType;
+	}
+	
+	/***********************************************/
+	/* Variable to track current class being processed */
+	/* (No stack needed since classes can't nest)  */
+	/***********************************************/
+	private TypeClass currentClass = null;
+	
+	/***********************************************/
+	/* Set current class                           */
+	/***********************************************/
+	public void setCurrentClass(TypeClass cls)
+	{
+		currentClass = cls;
+	}
+	
+	/***********************************************/
+	/* Clear current class                         */
+	/***********************************************/
+	public void clearCurrentClass()
+	{
+		currentClass = null;
+	}
+	
+	/***********************************************/
+	/* Get current class                           */
+	/***********************************************/
+	public TypeClass getCurrentClass()
+	{
+		return currentClass;
+	}
+	
+	/***********************************************/
+	/* Check if a name is a reserved keyword      */
+	/***********************************************/
+	public boolean isReservedKeyword(String name)
+	{
+		if (name == null) {
+			return false;
+		}
+		
+		// Language keywords
+		if (name.equals("array") || name.equals("class") || 
+		    name.equals("return") || name.equals("while") ||
+		    name.equals("if") || name.equals("else") ||
+		    name.equals("new") || name.equals("extends") ||
+		    name.equals("nil")) {
+			return true;
+		}
+		
+		// Primitive type names (also reserved)
+		if (name.equals("int") || name.equals("string") || name.equals("void")) {
+			return true;
+		}
+		
+		// Library function names (also reserved)
+		if (name.equals("PrintInt") || name.equals("PrintString")) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/***********************************************/
+	/* Find identifier in class scope              */
+	/* Search order: class → superclass chain → global */
+	/***********************************************/
+	public Type findInClassScope(String name)
+	{
+		// If not in a class scope, use regular find
+		if (currentClass == null) {
+			return find(name);
+		}
+		
+		// Search in current class and superclass chain
+		TypeClass cls = currentClass;
+		while (cls != null) {
+			// Search in class dataMembers
+			for (TypeList it = cls.dataMembers; it != null; it = it.tail) {
+				if (it.head != null && it.head.name != null && it.head.name.equals(name)) {
+					// Found in class - return the type
+					// If it's a TypeClassField, return the actual field type
+					if (it.head instanceof TypeClassField) {
+						return ((TypeClassField) it.head).getFieldType();
+					}
+					// If it's a TypeFunction (method), return the function type
+					if (it.head instanceof TypeFunction) {
+						return it.head;
+					}
+					// Otherwise return the type as-is
+					return it.head;
+				}
+			}
+			// Move to superclass
+			cls = cls.father;
+		}
+		
+		// Not found in class hierarchy, search global scope
+		return find(name);
 	}
 	
 	public static int n=0;

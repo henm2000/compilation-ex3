@@ -46,7 +46,14 @@ public class AstDecFunc extends AstDec
         TypeList type_list = null;
 
         /*******************/
-        /* [0] Check return type exists */
+        /* [0] Check if function name is a reserved keyword */
+        /*******************/
+        if (SymbolTable.getInstance().isReservedKeyword(name)) {
+            throw new SemanticErrorException(line);
+        }
+        
+        /*******************/
+        /* [0a] Check return type exists */
         /*     Must be a type definition, not a variable */
         /*******************/
         returnTypeObj = SymbolTable.getInstance().findTypeDefinition(this.returnType);
@@ -66,6 +73,13 @@ public class AstDecFunc extends AstDec
         if (params != null) {
             for (AstParam param : params)
             {
+                /************************************************/
+                /* [2a] Check if parameter name is a reserved keyword */
+                /************************************************/
+                if (SymbolTable.getInstance().isReservedKeyword(param.id)) {
+                    throw new SemanticErrorException(line);
+                }
+                
                 t = SymbolTable.getInstance().findTypeDefinition(param.typeName);
                 if (t == null)
                 {
@@ -73,7 +87,7 @@ public class AstDecFunc extends AstDec
                 }
                 
                 /************************************************/
-                /* [2a] Check that parameter type is not void    */
+                /* [2b] Check that parameter type is not void    */
                 /************************************************/
                 if (t == TypeVoid.getInstance() || param.typeName.equals("void"))
                 {
@@ -86,24 +100,34 @@ public class AstDecFunc extends AstDec
         }
 
         /*******************/
-        /* [3] Semant Body */
+        /* [3] Set return type for return statement validation */
+        /*******************/
+        SymbolTable.getInstance().setReturnType(returnTypeObj);
+
+        /*******************/
+        /* [4] Semant Body */
         /*******************/
         if (body != null) {
             body.semantMe();
         }
 
+        /*******************/
+        /* [5] Clear return type */
+        /*******************/
+        SymbolTable.getInstance().clearReturnType();
+
         /*****************/
-        /* [4] End Scope */
+        /* [6] End Scope */
         /*****************/
         SymbolTable.getInstance().endScope();
 
         /***************************************************/
-        /* [5] Enter the Function Type to the Symbol Table */
+        /* [7] Enter the Function Type to the Symbol Table */
         /***************************************************/
         SymbolTable.getInstance().enter(name, new TypeFunction(returnTypeObj, name, type_list));
 
         /************************************************************/
-        /* [6] Return value is irrelevant for function declarations */
+        /* [8] Return value is irrelevant for function declarations */
         /************************************************************/
         return null;		
     }

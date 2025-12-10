@@ -1,5 +1,9 @@
 package ast;
 
+import types.*;
+import symboltable.SymbolTable;
+import SemanticErrorException;
+
 public class AstStmtWhile extends AstStmt
 {
     public AstExp cond;
@@ -29,5 +33,39 @@ public class AstStmtWhile extends AstStmt
             body.printMe();
             AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
         }
+    }
+    
+    public Type semantMe()
+    {
+        /****************************/
+        /* [0] Semant the Condition */
+        /*     Must be of type int   */
+        /****************************/
+        if (cond == null || cond.semantMe() != TypeInt.getInstance())
+        {
+            throw new SemanticErrorException(line);
+        }
+        
+        /*************************/
+        /* [1] Begin While Scope */
+        /*************************/
+        SymbolTable.getInstance().beginScope();
+
+        /***************************/
+        /* [2] Semant Body         */
+        /***************************/
+        if (body != null) {
+            body.semantMe();
+        }
+
+        /*****************/
+        /* [3] End Scope */
+        /*****************/
+        SymbolTable.getInstance().endScope();
+
+        /***************************************************/
+        /* [4] Return value is irrelevant for while statement */
+        /***************************************************/
+        return null;		
     }
 }

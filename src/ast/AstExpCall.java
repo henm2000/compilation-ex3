@@ -58,6 +58,13 @@ public class AstExpCall extends AstExp
             Type receiverType = receiver.semantMe();
             
             // Receiver must be a class type (or nil, which is allowed for class types)
+            // However, we can't actually call methods on nil, so check for nil first
+            if (isNilType(receiverType)) {
+                // Nil is allowed for class types, but we can't call methods on nil
+                // This is a semantic error - attempting to call a method on nil
+                throw new SemanticErrorException(line);
+            }
+            
             if (!receiverType.isClass()) {
                 throw new SemanticErrorException(line);
             }

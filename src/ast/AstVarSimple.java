@@ -1,5 +1,9 @@
 package ast;
 
+import types.*;
+import symboltable.SymbolTable;
+import SemanticErrorException;
+
 public class AstVarSimple extends AstVar
 {
 	/************************/
@@ -48,7 +52,11 @@ public class AstVarSimple extends AstVar
 	}
 	public Type semantMe()
 	{
-		Type result = SymbolTable.getInstance().find(name);
+		/************************************************/
+		/* Use class scope resolution if in a class,    */
+		/* otherwise use regular scope resolution        */
+		/************************************************/
+		Type result = SymbolTable.getInstance().findInClassScope(name);
 		if (result == null) {
 			throw new SemanticErrorException(line);
 		}

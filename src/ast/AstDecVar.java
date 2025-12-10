@@ -52,7 +52,14 @@ public class AstDecVar extends AstDec
         }
         
         /**************************************/
-        /* [3] Check That Name does NOT exist within the scope */
+        /* [3] Check if variable name is a reserved keyword */
+        /**************************************/
+        if (SymbolTable.getInstance().isReservedKeyword(id)) {
+            throw new SemanticErrorException(line);
+        }
+        
+        /**************************************/
+        /* [3a] Check That Name does NOT exist within the scope */
         /**************************************/
         if (SymbolTable.getInstance().findInCurrentScope(id) != null) {
             throw new SemanticErrorException(line);

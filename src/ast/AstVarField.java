@@ -1,6 +1,7 @@
 package ast;
 
-import types.TypeClassField;
+import types.*;
+import SemanticErrorException;
 
 public class AstVarField extends AstVar
 {
@@ -69,8 +70,15 @@ public class AstVarField extends AstVar
 		if (var != null) t = var.semantMe();
 		
 		/*********************************/
-		/* [2] Make sure type is a class */
+		/* [2] Make sure type is a class or nil */
+		/*     Nil is allowed for class types, but we can't access fields on nil */
 		/*********************************/
+		if (isNilType(t)) {
+			// Nil is allowed for class types, but we can't access fields on nil
+			// This is a semantic error - attempting to access a field on nil
+			throw new SemanticErrorException(line);
+		}
+		
 		if (t.isClass() == false)
 		{
 			throw new SemanticErrorException(line);
@@ -81,25 +89,46 @@ public class AstVarField extends AstVar
 		}
 		
 		/************************************/
-		/* [3] Look for fieldName inside tc */
+		/* [3] Look for fieldName in class hierarchy */
+		/*     Search current class and all superclasses */
 		/************************************/
-		for (TypeList it = tc.dataMembers; it != null; it=it.tail)
-		{
-			if (it.head != null && it.head.name != null && it.head.name.equals(fieldName))
+		TypeClass current = tc;
+		
+		while (current != null) {
+			// Search in current class's dataMembers
+			for (TypeList it = current.dataMembers; it != null; it = it.tail)
 			{
-				// If it's a TypeClassField, return the actual field type
-				if (it.head instanceof TypeClassField) {
-					return ((TypeClassField) it.head).getFieldType();
+				if (it.head != null && it.head.name != null && it.head.name.equals(fieldName))
+				{
+					// If it's a TypeClassField, return the actual field type
+					if (it.head instanceof TypeClassField) {
+						return ((TypeClassField) it.head).getFieldType();
+					}
+					// If it's a method, that's an error (can't access method as field)
+					if (it.head instanceof TypeFunction) {
+						throw new SemanticErrorException(line);
+					}
+					return it.head;
 				}
-				return it.head;
 			}
+			
+			// Move to superclass
+			current = current.father;
 		}
 		
 		/*********************************************/
-		/* [4] fieldName does not exist in class var */
+		/* [4] fieldName does not exist in class hierarchy */
 		/*********************************************/
 		throw new SemanticErrorException(line);
-		return null;
+	}
+	
+	/**
+	 * Check if a type is nil
+	 */
+	private boolean isNilType(Type t)
+	{
+		if (t == null) return false;
+		return t.name != null && t.name.equals("nil");
 	}
 
 }

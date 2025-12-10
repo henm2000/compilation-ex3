@@ -1,7 +1,11 @@
 package ast;
 
+import types.*;
+import symboltable.SymbolTable;
+import SemanticErrorException;
+
 public class AstStmtIf extends AstStmt
-{// TODO: check scopes
+{
     public AstExp cond;
     public AstStmtList thenBody;
     public AstStmtList elseBody; // may be null
@@ -46,34 +50,59 @@ public class AstStmtIf extends AstStmt
             AstGraphviz.getInstance().logEdge(serialNumber, elseBody.serialNumber);
         }
     }
+    
     public Type semantMe()
     {
         /****************************/
         /* [0] Semant the Condition */
+        /*     Must be of type int   */
         /****************************/
-        if (cond.semantMe() != TypeInt.getInstance())
+        if (cond == null || cond.semantMe() != TypeInt.getInstance())
         {
-            System.out.format(">> ERROR [%d:%d] condition inside IF is not integral\n",2,2);
+            throw new SemanticErrorException(line);
         }
         
         /*************************/
-        /* [1] Begin If Scope */
+        /* [1] Begin Then Scope */
         /*************************/
         SymbolTable.getInstance().beginScope();
 
         /***************************/
-        /* [2] Semant Data Members */
+        /* [2] Semant Then Body    */
         /***************************/
-        body.semantMe();
+        if (thenBody != null) {
+            thenBody.semantMe();
+        }
 
         /*****************/
-        /* [3] End Scope */
+        /* [3] End Then Scope */
         /*****************/
         SymbolTable.getInstance().endScope();
+        
+        /*************************/
+        /* [4] Handle Else Body  */
+        /*     (if it exists)     */
+        /*************************/
+        if (elseBody != null) {
+            /*************************/
+            /* [4a] Begin Else Scope */
+            /*************************/
+            SymbolTable.getInstance().beginScope();
+
+            /***************************/
+            /* [4b] Semant Else Body    */
+            /***************************/
+            elseBody.semantMe();
+
+            /*****************/
+            /* [4c] End Else Scope */
+            /*****************/
+            SymbolTable.getInstance().endScope();
+        }
 
         /***************************************************/
-        /* [4] Return value is irrelevant for if statement */
-        /**************************************************/
+        /* [5] Return value is irrelevant for if statement */
+        /***************************************************/
         return null;		
     }	
 }

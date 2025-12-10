@@ -44,7 +44,14 @@ public class AstDecArrayTypedef extends AstDec
         }
         
         /************************************************/
-        /* [2] Check that name doesn't exist in scope  */
+        /* [2] Check if array type name is a reserved keyword */
+        /************************************************/
+        if (SymbolTable.getInstance().isReservedKeyword(id)) {
+            throw new SemanticErrorException(line);
+        }
+        
+        /************************************************/
+        /* [2a] Check that name doesn't exist in scope  */
         /************************************************/
         if (SymbolTable.getInstance().findInCurrentScope(id) != null) {
             throw new SemanticErrorException(line);

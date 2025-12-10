@@ -45,7 +45,14 @@ public class AstDecClass extends AstDec
         }
         
         /************************************************/
-        /* [1] Check if class name already exists       */
+        /* [1] Check if class name is a reserved keyword */
+        /************************************************/
+        if (SymbolTable.getInstance().isReservedKeyword(name)) {
+            throw new SemanticErrorException(line);
+        }
+        
+        /************************************************/
+        /* [1a] Check if class name already exists       */
         /************************************************/
         if (SymbolTable.getInstance().find(name) != null) {
             throw new SemanticErrorException(line);
@@ -79,6 +86,13 @@ public class AstDecClass extends AstDec
         /* [3] Begin Class Scope */
         /*************************/
         SymbolTable.getInstance().beginScope();
+        
+        /************************************************/
+        /* [3a] Create TypeClass first (without dataMembers) */
+        /*      so we can set it as current class       */
+        /************************************************/
+        TypeClass t = new TypeClass(superClass, name, null);
+        SymbolTable.getInstance().setCurrentClass(t);
 
         /************************************************/
         /* [4] Process fields/methods in order         */
@@ -86,6 +100,8 @@ public class AstDecClass extends AstDec
         /************************************************/
         TypeList dataMembers = null;
         HashMap<String, Type> definedMembers = new HashMap<>(); // Track defined members for shadowing check
+        // Also track members in order for incremental updates to t.dataMembers
+        java.util.ArrayList<Type> memberTypesList = new java.util.ArrayList<>();
         
         // First pass: collect all member names from superclass for shadowing check
         HashMap<String, Type> superMembers = new HashMap<>();
@@ -103,6 +119,8 @@ public class AstDecClass extends AstDec
         
         // Process each field/method and collect types
         java.util.ArrayList<Type> memberTypes = new java.util.ArrayList<>();
+        // Also track members in order for incremental updates to t.dataMembers
+        java.util.ArrayList<Type> memberTypesList = new java.util.ArrayList<>();
         
         for (AstDec field : fields) {
             String memberName = null;
@@ -202,32 +220,42 @@ public class AstDecClass extends AstDec
             if (memberName != null && memberType != null) {
                 definedMembers.put(memberName, memberType);
                 memberTypes.add(memberType);
+                memberTypesList.add(memberType);
+                
+                // Update t.dataMembers incrementally so later fields can reference earlier ones
+                // Prepend to maintain reverse order (will be reversed at the end)
+                t.dataMembers = new TypeList(memberType, t.dataMembers);
             }
         }
         
-        // Build TypeList in correct order (reverse the list since we prepend)
-        for (int i = memberTypes.size() - 1; i >= 0; i--) {
-            dataMembers = new TypeList(memberTypes.get(i), dataMembers);
+        // Build TypeList in correct order (reverse the list since we prepended)
+        dataMembers = null;
+        for (int i = memberTypesList.size() - 1; i >= 0; i--) {
+            dataMembers = new TypeList(memberTypesList.get(i), dataMembers);
         }
         
         /************************************************/
-        /* [5] Create TypeClass (automatically added   */
-        /*     to classes HashMap in constructor)       */
+        /* [5] Update TypeClass with final dataMembers */
         /************************************************/
-        TypeClass t = new TypeClass(superClass, name, dataMembers);
+        t.dataMembers = dataMembers;
 
         /*****************/
-        /* [6] End Scope */
+        /* [6] Clear current class */
+        /*****************/
+        SymbolTable.getInstance().clearCurrentClass();
+
+        /*****************/
+        /* [7] End Scope */
         /*****************/
         SymbolTable.getInstance().endScope();
 
         /************************************************/
-        /* [7] Enter the Class Type to the Symbol Table */
+        /* [8] Enter the Class Type to the Symbol Table */
         /************************************************/
         SymbolTable.getInstance().enter(name, t);
 
         /*********************************************************/
-        /* [8] Return value is irrelevant for class declarations */
+        /* [9] Return value is irrelevant for class declarations */
         /*********************************************************/
         return null;		
     }

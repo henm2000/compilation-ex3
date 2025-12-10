@@ -113,31 +113,26 @@ public class AstStmtAssign extends AstStmt
 		if (varType.isArray()) {
 			TypeArray varArray = (TypeArray) varType;
 			
-			// Check if expression is "new T" (not "new T[e]")
+			// Check if expression is "new T[e]" (array allocation)
 			if (exp instanceof AstExpNew) {
 				AstExpNew newExp = (AstExpNew) exp;
-				// If sizeExpr is null, it's "new T" (class allocation)
-				// If sizeExpr is not null, it's "new T[e]" (array allocation)
 				
 				if (newExp.sizeExpr == null) {
 					// Expression is "new T" - this is for class allocation, not array
-					// So this case shouldn't match array assignment
 					return false;
 				} else {
-					// Expression is "new T[e]" - check if T matches array element type
-					// Note: We need to check if the typeName matches the element type
-					// For now, we'll rely on expType being set correctly by AstExpNew.semantMe()
-					// But we need to check if it's an array with matching element type
-					if (expType.isArray()) {
-						TypeArray expArray = (TypeArray) expType;
-						// Arrays must have exactly the same type (same name)
-						return varArray.name.equals(expArray.name);
-					}
-					return false;
+					// Expression is "new T[e]" - expType is the element type T
+					// Rule: if e = new T, then x must be of type array defined over type T
+					// Note: T can be a primitive, class, or even an array type (for nested arrays)
+					// Example: array IntArray = int[]; array IntMatrix = IntArray[];
+					//          IntMatrix m := new IntArray[5];  // T = IntArray (array type)
+					// Check if varArray.elementType == expType (where expType is T)
+					// This handles both simple arrays (T = int) and nested arrays (T = IntArray)
+					return varArray.elementType == expType;
 				}
 			}
 			
-			// For non-new expressions, arrays must have exactly the same type
+			// For non-new expressions, arrays must have exactly the same type (same name)
 			if (expType.isArray()) {
 				TypeArray expArray = (TypeArray) expType;
 				return varArray.name.equals(expArray.name);
