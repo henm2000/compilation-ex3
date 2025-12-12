@@ -54,11 +54,8 @@ import java_cup.runtime.*;
     /*********************************************************************************/
     /* Create a new java_cup.runtime.Symbol with information about the current token */
     /*********************************************************************************/
-    private Symbol symbol(int type)               {return new Symbol(type, yyline, yycolumn);}
-    private Symbol symbol(int type, Object value) {return new Symbol(type, yyline, yycolumn, value);}
-
-    /*******************************************/
-    /* Enable line number extraction from main */
+  private Symbol symbol(int type)               {return new Symbol(type, yyline+1, yycolumn+1);}
+  private Symbol symbol(int type, Object value) {return new Symbol(type, yyline+1, yycolumn+1, value);}
     /*******************************************/
     public int getLine() { return yyline + 1; } 
 

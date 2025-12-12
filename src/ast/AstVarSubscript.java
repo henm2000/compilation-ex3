@@ -121,13 +121,4 @@ public class AstVarSubscript extends AstVar
 		/*********************************/
 		return arrayType.elementType;
 	}
-	
-	/**
-	 * Check if a type is nil
-	 */
-	private boolean isNilType(Type t)
-	{
-		if (t == null) return false;
-		return t.name != null && t.name.equals("nil");
-	}
 }

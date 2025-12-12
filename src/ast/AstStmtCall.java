@@ -20,4 +20,11 @@ public class AstStmtCall extends AstStmt {
             AstGraphviz.getInstance().logEdge(serialNumber, call.serialNumber);
         }
     }
+
+    public Type semantMe() {
+        if (call != null) {
+            call.semantMe();
+        }
+        return null;
+    }
 }

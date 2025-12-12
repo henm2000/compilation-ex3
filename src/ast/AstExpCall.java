@@ -100,7 +100,7 @@ public class AstExpCall extends AstExp
                 Type paramType = currentParam.head;
                 
                 // Check type compatibility
-                if (!isTypeCompatibleForAssignment(paramType, argType)) {
+                if (!isAssignmentCompatible(paramType, argType, arg)) {
                     throw new SemanticErrorException(line);
                 }
                 
@@ -153,76 +153,5 @@ public class AstExpCall extends AstExp
             count++;
         }
         return count;
-    }
-    
-    /**
-     * Check if an expression type is compatible with a parameter type for assignment
-     * This is similar to assignment compatibility rules
-     */
-    private boolean isTypeCompatibleForAssignment(Type paramType, Type exprType)
-    {
-        // Handle nil: can be assigned to arrays and classes
-        if (isNilType(exprType)) {
-            return paramType.isArray() || paramType.isClass();
-        }
-        
-        // Primitives: exact match required
-        if (paramType == TypeInt.getInstance() || paramType == TypeString.getInstance()) {
-            return paramType == exprType;
-        }
-        
-        // Arrays: exact type match required (same name)
-        if (paramType.isArray()) {
-            if (!exprType.isArray()) {
-                return false;
-            }
-            TypeArray paramArr = (TypeArray) paramType;
-            TypeArray exprArr = (TypeArray) exprType;
-            return paramArr.name.equals(exprArr.name);
-        }
-        
-        // Classes: same type or exprType is subclass of paramType
-        if (paramType.isClass()) {
-            if (!exprType.isClass()) {
-                return false;
-            }
-            TypeClass paramClass = (TypeClass) paramType;
-            TypeClass exprClass = (TypeClass) exprType;
-            return areClassesCompatible(paramClass, exprClass);
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Check if exprClass is compatible with paramClass
-     * (same type or exprClass is a subclass of paramClass)
-     */
-    private boolean areClassesCompatible(TypeClass paramClass, TypeClass exprClass)
-    {
-        // Same class
-        if (paramClass.name.equals(exprClass.name)) {
-            return true;
-        }
-        
-        // Check if exprClass is a subclass of paramClass
-        TypeClass current = exprClass.father;
-        while (current != null) {
-            if (current.name.equals(paramClass.name)) {
-                return true;
-            }
-            current = current.father;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Check if a type is nil
-     */
-    private boolean isNilType(Type t)
-    {
-        if (t == null) return false;
-        return t.name != null && t.name.equals("nil");
     }
 }

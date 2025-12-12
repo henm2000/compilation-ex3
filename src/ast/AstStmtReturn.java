@@ -69,7 +69,7 @@ public class AstStmtReturn extends AstStmt
         /* [5] Check return expression type compatibility */
         /*     Uses same rules as assignment            */
         /************************************************/
-        if (!isReturnTypeCompatible(returnType, retExpType)) {
+        if (!isAssignmentCompatible(returnType, retExpType, retExp)) {
             throw new SemanticErrorException(line);
         }
         
@@ -77,82 +77,5 @@ public class AstStmtReturn extends AstStmt
         /* [6] Return value is irrelevant for statements */
         /************************************************/
         return null;
-    }
-    
-    /**
-     * Check if return expression type is compatible with function return type
-     * Uses the same rules as assignment compatibility
-     */
-    private boolean isReturnTypeCompatible(Type returnType, Type expType)
-    {
-        /************************************************/
-        /* Handle nil: can be returned for arrays/classes */
-        /* but not for primitives (int/string)            */
-        /************************************************/
-        if (isNilType(expType)) {
-            return returnType.isArray() || returnType.isClass();
-        }
-        
-        /************************************************/
-        /* Primitives: exact type match required         */
-        /************************************************/
-        if (returnType == TypeInt.getInstance() || returnType == TypeString.getInstance()) {
-            return returnType == expType;
-        }
-        
-        /************************************************/
-        /* Arrays: exact type match required (same name) */
-        /************************************************/
-        if (returnType.isArray()) {
-            if (!expType.isArray()) {
-                return false;
-            }
-            TypeArray returnArray = (TypeArray) returnType;
-            TypeArray expArray = (TypeArray) expType;
-            return returnArray.name.equals(expArray.name);
-        }
-        
-        /************************************************/
-        /* Classes: same type OR expType is subclass    */
-        /* of returnType (polymorphism)                  */
-        /************************************************/
-        if (returnType.isClass()) {
-            if (!expType.isClass()) {
-                return false;
-            }
-            
-            TypeClass returnClass = (TypeClass) returnType;
-            TypeClass expClass = (TypeClass) expType;
-            
-            // Same class
-            if (returnClass.name.equals(expClass.name)) {
-                return true;
-            }
-            
-            // Check if expClass is a subclass of returnClass
-            TypeClass current = expClass.father;
-            while (current != null) {
-                if (current.name.equals(returnClass.name)) {
-                    return true;
-                }
-                current = current.father;
-            }
-            
-            return false;
-        }
-        
-        /************************************************/
-        /* If we get here, types are incompatible       */
-        /************************************************/
-        return false;
-    }
-    
-    /**
-     * Check if a type is nil
-     */
-    private boolean isNilType(Type t)
-    {
-        if (t == null) return false;
-        return t.name != null && t.name.equals("nil");
     }
 }

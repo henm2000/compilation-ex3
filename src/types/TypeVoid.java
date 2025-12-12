@@ -10,7 +10,9 @@ public class TypeVoid extends Type
 	/*****************************/
 	/* PREVENT INSTANTIATION ... */
 	/*****************************/
-	protected TypeVoid() {}
+	protected TypeVoid() {
+		name = "void";
+	}
 
 	/******************************/
 	/* GET SINGLETON INSTANCE ... */

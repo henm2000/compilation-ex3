@@ -72,12 +72,22 @@ public class AstDecFunc extends AstDec
         /* [2] Semant Input Params */
         /***************************/
         if (params != null) {
-            for (AstParam param : params)
+            for (int i = params.size() - 1; i >= 0; i--)
             {
+                AstParam param = params.get(i);
+                
                 /************************************************/
                 /* [2a] Check if parameter name is a reserved keyword */
                 /************************************************/
                 if (SymbolTable.getInstance().isReservedKeyword(param.id)) {
+                    throw new SemanticErrorException(line);
+                }
+                
+                /**************************************/
+                /* [2b] Check That Name does NOT exist */
+                /**************************************/
+                if (SymbolTable.getInstance().findInCurrentScope(param.id) != null)
+                {
                     throw new SemanticErrorException(line);
                 }
                 
@@ -88,7 +98,7 @@ public class AstDecFunc extends AstDec
                 }
                 
                 /************************************************/
-                /* [2b] Check that parameter type is not void    */
+                /* [2c] Check that parameter type is not void    */
                 /************************************************/
                 if (t == TypeVoid.getInstance() || param.typeName.equals("void"))
                 {
@@ -99,6 +109,9 @@ public class AstDecFunc extends AstDec
                 SymbolTable.getInstance().enter(param.id, t);
             }
         }
+
+        TypeFunction funcType = new TypeFunction(returnTypeObj, name, type_list);
+        SymbolTable.getInstance().enter(name, funcType);
 
         /*******************/
         /* [3] Set return type for return statement validation */
@@ -125,7 +138,7 @@ public class AstDecFunc extends AstDec
         /***************************************************/
         /* [7] Enter the Function Type to the Symbol Table */
         /***************************************************/
-        SymbolTable.getInstance().enter(name, new TypeFunction(returnTypeObj, name, type_list));
+        SymbolTable.getInstance().enter(name, funcType);
 
         /************************************************************/
         /* [8] Return value is irrelevant for function declarations */

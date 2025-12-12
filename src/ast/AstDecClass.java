@@ -71,9 +71,7 @@ public class AstDecClass extends AstDec
             }
             superClass = (TypeClass) superType;
             
-            /************************************************/
-            /* [1a] Check for circular inheritance           */
-            /************************************************/
+            // Check for circular inheritance
             TypeClass current = superClass;
             while (current != null) {
                 if (current.name.equals(name)) {
@@ -83,16 +81,17 @@ public class AstDecClass extends AstDec
             }
         }
         
-        /*************************/
-        /* [3] Begin Class Scope */
-        /*************************/
-        SymbolTable.getInstance().beginScope();
-        
         /************************************************/
-        /* [3a] Create TypeClass first (without dataMembers) */
-        /*      so we can set it as current class       */
+        /* [3] Create TypeClass and enter in global    */
+        /*     scope so it's available everywhere      */
         /************************************************/
         TypeClass t = new TypeClass(superClass, name, null);
+        SymbolTable.getInstance().enter(name, t);
+        
+        /*************************/
+        /* [3a] Begin Class Scope */
+        /*************************/
+        SymbolTable.getInstance().beginScope();
         SymbolTable.getInstance().setCurrentClass(t);
 
         /************************************************/
@@ -146,9 +145,8 @@ public class AstDecClass extends AstDec
                     throw new SemanticErrorException(line);
                 }
                 
-                // Create a TypeClassField wrapper for the field
-                // This allows lookup by field name while preserving the actual type
-                memberType = new TypeClassField(memberName, baseType);
+                // Store the base type directly (will be wrapped later)
+                memberType = baseType;
                 
             } else if (field instanceof AstDecFunc) {
                 AstDecFunc funcDec = (AstDecFunc) field;
@@ -188,26 +186,40 @@ public class AstDecClass extends AstDec
                     if (existing instanceof TypeFunction) {
                         TypeFunction superFunc = (TypeFunction) existing;
                         
-                        // Check return type matches
-                        if (newFunc.returnType == null || superFunc.returnType == null ||
-                            !newFunc.returnType.name.equals(superFunc.returnType.name)) {
-                            throw new SemanticErrorException(line);
+                        // Check return type matches (void types should have same name)
+                        if ((newFunc.returnType == null && superFunc.returnType != null) ||
+                            (newFunc.returnType != null && superFunc.returnType == null) ||
+                            (newFunc.returnType != null && superFunc.returnType != null &&
+                             !newFunc.returnType.name.equals(superFunc.returnType.name))) {
+                            throw new SemanticErrorException(((AstDecFunc)field).line);
                         }
                         
                         // Check parameter types match exactly
                         TypeList newParams = newFunc.params;
                         TypeList superParams = superFunc.params;
-                        while (newParams != null && superParams != null) {
-                            if (newParams.head == null || superParams.head == null ||
-                                !newParams.head.name.equals(superParams.head.name)) {
-                                throw new SemanticErrorException(line);
-                            }
-                            newParams = newParams.tail;
-                            superParams = superParams.tail;
+                        
+                        // Handle case where both functions have no parameters
+                        if (newParams == null && superParams == null) {
+                            // Both have no parameters, this is fine, continue
                         }
-                        if (newParams != null || superParams != null) {
-                            // Different number of parameters
-                            throw new SemanticErrorException(line);
+                        // Handle case where one has parameters and other doesn't
+                        else if (newParams == null || superParams == null) {
+                            throw new SemanticErrorException(((AstDecFunc)field).line);
+                        }
+                        // Handle case where both have parameters - compare them
+                        else {
+                            while (newParams != null && superParams != null) {
+                                if (newParams.head == null || superParams.head == null ||
+                                    !newParams.head.name.equals(superParams.head.name)) {
+                                    throw new SemanticErrorException(((AstDecFunc)field).line);
+                                }
+                                newParams = newParams.tail;
+                                superParams = superParams.tail;
+                            }
+                            if (newParams != null || superParams != null) {
+                                // Different number of parameters
+                                throw new SemanticErrorException(((AstDecFunc)field).line);
+                            }
                         }
                     }
                 }
@@ -216,15 +228,17 @@ public class AstDecClass extends AstDec
             // Add to defined members and collect type
             if (memberName != null && memberType != null) {
                 definedMembers.put(memberName, memberType);
-                memberTypesList.add(memberType);
                 
-                // Update t.dataMembers incrementally so later fields can reference earlier ones
-                // Prepend to maintain reverse order (will be reversed at the end)
-                t.dataMembers = new TypeList(memberType, t.dataMembers);
+                Type typeToAdd = memberType;
+                if (!(memberType instanceof TypeFunction)) {
+                    typeToAdd = new TypeClassField(memberName, memberType);
+                }
+                
+                memberTypesList.add(typeToAdd);
             }
         }
         
-        // Build TypeList in correct order (reverse the list since we prepended)
+        // Build TypeList in declaration order (first declared = first in list)
         dataMembers = null;
         for (int i = memberTypesList.size() - 1; i >= 0; i--) {
             dataMembers = new TypeList(memberTypesList.get(i), dataMembers);
@@ -245,12 +259,8 @@ public class AstDecClass extends AstDec
         /*****************/
         SymbolTable.getInstance().endScope();
 
-        /************************************************/
-        /* [8] Enter the Class Type to the Symbol Table */
-        /************************************************/
-        SymbolTable.getInstance().enter(name, t);
-
         /*********************************************************/
+        /* [8] Class already entered earlier for self-reference */
         /* [9] Return value is irrelevant for class declarations */
         /*********************************************************/
         return null;		

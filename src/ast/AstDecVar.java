@@ -76,13 +76,16 @@ public class AstDecVar extends AstDec
         /************************************************/
         if (init != null) {
             Type initType = init.semantMe();
-            // Note: Assignment compatibility will be checked later in AstStmtAssign
-            // For now, we just semant the expression to ensure it's valid
+            
+            // Check assignment compatibility for variable initialization
+            if (!isAssignmentCompatible(t, initType, init)) {
+                throw new SemanticErrorException(line);
+            }
         }
   
         /************************************************************/
         /* [6] Return value is irrelevant for variable declarations */
         /************************************************************/
-        return null;		
-    }  
+        return null;
+    }
 }
