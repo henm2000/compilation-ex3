@@ -4,8 +4,8 @@
 import java_cup.runtime.*;
 import ast.*;
 import java.util.*;
-import SyntaxErrorException;
-import LexicalErrorException;
+import exceptions.SyntaxErrorException;
+import exceptions.LexicalErrorException;
 
 parser code 
 {:

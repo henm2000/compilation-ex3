@@ -13,8 +13,7 @@ import java.util.HashMap;
 /* PROJECT IMPORTS */
 /*******************/
 import types.*;
-import SemanticErrorException;
-
+import exceptions.SemanticErrorException;
 /****************/
 /* SYMBOL TABLE */
 /****************/
@@ -45,6 +44,29 @@ public class SymbolTable
 		return 12;
 	}
 
+	/*******************************************************************/
+	/* Helper method to determine classification from Type ... */
+	/*******************************************************************/
+	private String getClassification(Type t)
+	{
+		if (t instanceof TypeFunction) {
+			return "FUNCTION";
+		}
+		if (t instanceof TypeClass) {
+			return "CLASS";
+		}
+		if (t instanceof TypeArray) {
+			return "ARRAY_TYPE";
+		}
+		if (t instanceof TypeForScopeBoundaries) {
+			return "SCOPE_BOUNDARY";
+		}
+		if (t instanceof TypeInt || t instanceof TypeString || t instanceof TypeVoid) {
+			return "PRIMITIVE_TYPE";
+		}
+		return "VARIABLE";
+	}
+
 	/****************************************************************************/
 	/* Enter a variable, function, class type or array type to the symbol table */
 	/****************************************************************************/
@@ -64,7 +86,7 @@ public class SymbolTable
 		/**************************************************************************/
 		/* [3] Prepare a new symbol table entry with name, type, next and prevtop */
 		/**************************************************************************/
-		SymbolTableEntry e = new SymbolTableEntry(name,t,hashValue,next,top, topIndex++);
+		SymbolTableEntry e = new SymbolTableEntry(name, t, getClassification(t), hashValue, next, top, topIndex++);
 
 		/**********************************************/
 		/* [4] Update the top of the symbol table ... */
@@ -110,9 +132,9 @@ public class SymbolTable
 		SymbolTableEntry e;
 		
 		// First check if it's a primitive type
-		if (name.equals("int") || name.equals("string")) {
+		if (name.equals("int") || name.equals("string") || name.equals("void")) {
 			Type t = find(name);
-			if (t != null && (t == TypeInt.getInstance() || t == TypeString.getInstance())) {
+			if (t != null && (t == TypeInt.getInstance() || t == TypeString.getInstance() || t == TypeVoid.getInstance())) {
 				return t;
 			}
 		}
@@ -484,11 +506,12 @@ public class SymbolTable
 			/*****************************************/
 			instance.enter("int",   TypeInt.getInstance());
 			instance.enter("string", TypeString.getInstance());
+			instance.enter("void", TypeVoid.getInstance());
 
 			/*************************************/
 			/* [2] How should we handle void ??? */
+			/* ANSWER: We handle it above ^^^ */
 			/*************************************/
-
 			/***************************************/
 			/* [3] Enter library function PrintInt */
 			/***************************************/

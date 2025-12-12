@@ -1,4 +1,5 @@
 package ast;
+import types.*;
 
 public class AstParam extends AstNode
 {

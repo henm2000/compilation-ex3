@@ -1,5 +1,6 @@
 package ast;
-//TODO: we should implement the boolean = sign according to class logic. 
+import types.*;
+import exceptions.SemanticErrorException;
 
 public class AstExpBinop extends AstExp
 {

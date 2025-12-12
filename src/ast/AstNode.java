@@ -1,5 +1,6 @@
 package ast;
-//finished
+import types.*;
+
 public abstract class AstNode
 {
 	/*******************************************/

@@ -1,8 +1,7 @@
 package ast;
 
 import types.*;
-import SemanticErrorException;
-
+import exceptions.SemanticErrorException;
 public class AstVarField extends AstVar
 {
 	public AstVar var; 

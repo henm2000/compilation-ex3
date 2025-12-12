@@ -2,6 +2,7 @@ package ast;
 
 import types.*;
 import symboltable.SymbolTable;
+import exceptions.SemanticErrorException;
 
 public class AstDecVar extends AstDec
 {

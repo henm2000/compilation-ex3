@@ -2,7 +2,7 @@ package ast;
 
 import types.*;
 import symboltable.SymbolTable;
-import SemanticErrorException;
+import exceptions.SemanticErrorException;
 
 public class AstExpNew extends AstExp
 {// new name  \\ new name [ exp ]

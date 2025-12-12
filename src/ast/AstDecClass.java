@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.HashMap;
 import types.*;
 import symboltable.SymbolTable;
+import exceptions.SemanticErrorException;
 
 public class AstDecClass extends AstDec
 {
@@ -117,11 +118,7 @@ public class AstDecClass extends AstDec
             }
         }
         
-        // Process each field/method and collect types
-        java.util.ArrayList<Type> memberTypes = new java.util.ArrayList<>();
-        // Also track members in order for incremental updates to t.dataMembers
-        java.util.ArrayList<Type> memberTypesList = new java.util.ArrayList<>();
-        
+        // Process each field/method and collect types        
         for (AstDec field : fields) {
             String memberName = null;
             Type memberType = null;
@@ -219,7 +216,6 @@ public class AstDecClass extends AstDec
             // Add to defined members and collect type
             if (memberName != null && memberType != null) {
                 definedMembers.put(memberName, memberType);
-                memberTypes.add(memberType);
                 memberTypesList.add(memberType);
                 
                 // Update t.dataMembers incrementally so later fields can reference earlier ones

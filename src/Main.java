@@ -2,11 +2,12 @@ import java.io.*;
 import java.io.PrintWriter;
 import java_cup.runtime.Symbol;
 import ast.*;
+import exceptions.*;
 
 public class Main
 {
 	/*this code works on the pc*/ 
-	static public void main(String argv[])
+	static public void main(String argv[]) throws Exception
 	{
 		Lexer l;
 		Parser p;

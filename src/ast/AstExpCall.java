@@ -3,7 +3,7 @@ package ast;
 import java.util.List;
 import types.*;
 import symboltable.SymbolTable;
-import SemanticErrorException;
+import exceptions.SemanticErrorException;
 
 public class AstExpCall extends AstExp
 {

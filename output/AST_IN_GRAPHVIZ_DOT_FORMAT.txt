@@ -1,0 +1,13 @@
+digraph
+{
+graph [ordering = "out"]
+v3 [label = "PROGRAM"];
+v2 [label = "FUNC\n(main)"];
+v0 [label = "RETURN"];
+v1 [label = "STMT
+LIST
+"];
+v1 -> v0;
+v2 -> v1;
+v3 -> v2;
+}

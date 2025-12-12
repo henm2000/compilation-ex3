@@ -2,8 +2,7 @@ package ast;
 
 import types.*;
 import symboltable.SymbolTable;
-import SemanticErrorException;
-
+import exceptions.SemanticErrorException;
 public class AstStmtWhile extends AstStmt
 {
     public AstExp cond;

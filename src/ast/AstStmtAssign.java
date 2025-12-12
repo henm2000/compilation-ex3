@@ -1,8 +1,8 @@
 package ast;
+import types.*;
 
 import types.*;
-import SemanticErrorException;
-
+import exceptions.SemanticErrorException;
 public class AstStmtAssign extends AstStmt
 {
 	/***************/

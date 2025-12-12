@@ -1,3 +1,5 @@
+package exceptions;
+
 public class SemanticErrorException extends RuntimeException 
 {
     private final int line;

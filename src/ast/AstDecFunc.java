@@ -2,6 +2,7 @@ package ast;
 
 import java.util.List;
 import types.*;
+import exceptions.SemanticErrorException;
 import symboltable.SymbolTable;
 
 public class AstDecFunc extends AstDec
