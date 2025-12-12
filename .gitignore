@@ -2,4 +2,4 @@ bin/
 expected_output/
 input/
 *.class
-output/
+output
