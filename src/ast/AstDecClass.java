@@ -128,12 +128,12 @@ public class AstDecClass extends AstDec
                 
                 // Check shadowing: field cannot shadow field or method in superclass
                 if (superMembers.containsKey(memberName)) {
-                    throw new SemanticErrorException(line);
+                    throw new SemanticErrorException(varDec.line);
                 }
                 
                 // Check shadowing: field cannot shadow field or method already defined in this class
                 if (definedMembers.containsKey(memberName)) {
-                    throw new SemanticErrorException(line);
+                    throw new SemanticErrorException(varDec.line);
                 }
                 
                 // Semant the variable declaration
@@ -157,7 +157,7 @@ public class AstDecClass extends AstDec
                     Type existing = superMembers.get(memberName);
                     // If it's a field (not a function), shadowing is illegal
                     if (!(existing instanceof TypeFunction)) {
-                        throw new SemanticErrorException(line);
+                        throw new SemanticErrorException(funcDec.line);
                     }
                 }
                 
@@ -166,10 +166,10 @@ public class AstDecClass extends AstDec
                     Type existing = definedMembers.get(memberName);
                     if (existing instanceof TypeFunction) {
                         // Method overloading is illegal
-                        throw new SemanticErrorException(line);
+                        throw new SemanticErrorException(funcDec.line);
                     } else {
                         // Method shadowing field is illegal
-                        throw new SemanticErrorException(line);
+                        throw new SemanticErrorException(funcDec.line);
                     }
                 }
                 

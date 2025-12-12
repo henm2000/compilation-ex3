@@ -47,12 +47,25 @@ public class AstExpCall extends AstExp
         /* [1] Determine if this is a method or function call */
         /************************************************/
         if (receiver == null) {
-            // Direct function call - look up in symbol table
-            Type t = SymbolTable.getInstance().find(methodName);
-            if (t == null || !(t instanceof TypeFunction)) {
-                throw new SemanticErrorException(line);
+            // Direct function call - could be:
+            // 1. Global function
+            // 2. Method call without receiver (implicit "this") if inside a class
+            
+            // First, check if we're inside a class
+            TypeClass currentClass = SymbolTable.getInstance().getCurrentClass();
+            if (currentClass != null) {
+                // We're inside a class - try to find the method in class hierarchy
+                funcType = findMethodInClass(currentClass, methodName);
             }
-            funcType = (TypeFunction) t;
+            
+            // If not found in class, try global scope
+            if (funcType == null) {
+                Type t = SymbolTable.getInstance().find(methodName);
+                if (t == null || !(t instanceof TypeFunction)) {
+                    throw new SemanticErrorException(line);
+                }
+                funcType = (TypeFunction) t;
+            }
         } else {
             // Method call on a class instance
             Type receiverType = receiver.semantMe();
